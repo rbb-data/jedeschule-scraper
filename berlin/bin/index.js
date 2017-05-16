@@ -52,59 +52,44 @@ function parseSchoollist ($) {
   return schools
 }
 
-function getSchoolList (schools, postdata, index) {
+function getSchoolList (postdata = {}) {
   return new Promise(function (resolve, reject) {
     console.log('Fetching overview of all schools...')
     scrape('https://www.berlin.de/sen/bildung/schule/berliner-schulen/schulverzeichnis/SchulListe.aspx', 'POST', postdata)
-      .then(($) => {
-        var newSchools = parseSchoollist($)
-        var postdata = {
-          '__EVENTTARGET': 'GridViewSchulen',
-          '__EVENTARGUMENT': 'Page$' + (index + 1),
-          '__VIEWSTATE': $('#__VIEWSTATE').attr('value'),
-          '__VIEWSTATEGENERATOR': $('#__VIEWSTATEGENERATOR').attr('value'),
-          '__VIEWSTATEENCRYPTED': $('#__VIEWSTATEENCRYPTED').attr('value'),
-          '__EVENTVALIDATION': $('#__EVENTVALIDATION').attr('value')
-        }
-        schools = schools.concat(newSchools)
-
-        if (newSchools.length === 41) {
-          console.log('requesting page ' + (index + 1))
-          return getSchoolList(schools, postdata, index + 1)
-        } else {
-          resolve(schools)
-        }
-      })
-      .then((data) => {
-        resolve(data)
-      })
+      .then($ => { resolve(parseSchoollist($)) })
       .catch(console.log)
   })
 }
 
-getSchoolList([], {}, 1)
+// getSchoolList fetches the overview
+getSchoolList()
   // .then(schools => schools.filter(school => school.name === 'Albert-Einstein-Gymnasium'))
   .then(schools => {
     let bar = new ProgressBar('Fetching details, current id: :token [:bar] (:current/:total, :eta seconds remaining)', { total: schools.length })
 
     async.eachSeries(schools, (school, schoolDone) => {
       let outputPath = pr(OUTPUT_DIR, school.id + '.json')
-      try {
-        JSON.parse(fs.readFileSync(outputPath))
+
+      // is the school already fetched and in our cache?
+      if (fs.existsSync(outputPath)) {
+        // yes it is!
         bar.tick({ token: school.code })
         return schoolDone()
-      } catch (e) {
-        // if (e.code !== 'ENOENT') throw e
       }
+
+      // no, it's not.
       fetchSchool(school)
         .then(school => {
           bar.tick({ token: school.id })
           fs.outputFile(
             outputPath,
             JSON.stringify(school),
-            schoolDone)
+            _ => setTimeout(schoolDone, Math.random() * 3) // be nice to the server
+          )
         })
-        .catch(schoolDone)
+        .catch(_ =>
+          setTimeout(schoolDone, Math.random() * 10) // be even nicer to the server
+        )
     }, function allDone (err) {
       if (err) console.error(err.stack)
       let data = fs.readdirSync(OUTPUT_DIR)
