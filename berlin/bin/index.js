@@ -30,6 +30,7 @@ function scrape(url, method = 'GET', formdata) {
             form: formdata,
             jar:true
         }, function(err, $) {
+          console.log('hay')
             if (err) {
                 reject(err);
             }
@@ -42,8 +43,9 @@ function scrape(url, method = 'GET', formdata) {
 
 function parseSchoollist($) {
     //let $ = cheerio.load(body);
+    console.log('parseSchoolList')
     let url = 'http://www.berlin.de/sen/bildung/schulverzeichnis_und_portraets/anwendung/SchulListe.aspx';
-    let $rows = $('#GridViewSchulen tr:not(:first-of-type)');
+    let $rows = $('#DataListSchulen tr');
     let schools = $rows.map((i, tr) => ({
         id: $(tr).find('a').attr('href').split('?IDSchulzweig=')[1],
         code: $(tr).find('a').text(),
@@ -53,15 +55,17 @@ function parseSchoollist($) {
         bezirk: $(tr).find('td:nth-child(4)').text(),
         ortsteil: $(tr).find('td:nth-child(5)').text(),
     })).get();
+    console.log('got schools:', $rows.length)
     return schools;
 }
 
 
 function getSchoolList(schools, postdata, index) {
-
+  console.log('getSchoolList')
     return new Promise(function (fulfill, reject) {
         scrape('https://www.berlin.de/sen/bildung/schule/berliner-schulen/schulverzeichnis/SchulListe.aspx', 'POST', postdata)
             .then(($) => {
+              console.log('inside promise here')
                 var new_schools = parseSchoollist($);
                 //var $ = cheerio.load(data);
                 var postdata = {
@@ -90,7 +94,7 @@ function getSchoolList(schools, postdata, index) {
 
 
 getSchoolList([], {}, 1)
-//  .then(schools => schools.filter(school => school.name === 'Albert-Einstein-Gymnasium'))
+  .then(schools => schools.filter(school => school.name === 'Albert-Einstein-Gymnasium'))
   .then(schools => {
     let bar = new ProgressBar(':bar :percent (:token1)', { total: schools.length });
 
