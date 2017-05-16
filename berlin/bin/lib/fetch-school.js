@@ -73,8 +73,16 @@ module.exports = school => new Promise((resolve, reject) => {
         school.lunch = $('#ContentPlaceHolderMenuListe_lblMittag').text()
         school.majorFields = $('#ContentPlaceHolderMenuListe_lblLeistungskurse').text()
       } catch (e) {
-        if ($('h1').text() === 'Bad Gateway!') console.log('Bad gateway for %s', school.id)
-        else throw e
+        if ($('h1').text() === 'Bad Gateway!') {
+          console.error('Bad gateway for %s', school.id)
+        } else {
+          // there might be connection timeouts or stuff like that, so we're
+          // aborting and forcing the user to restart manually, thereby gaining
+          // some time.
+          console.error('Error for school %s', school.id)
+          console.error(e)
+          process.exit(1)
+        }
       }
 
       school._visitedURLs = {}

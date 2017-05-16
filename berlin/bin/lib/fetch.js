@@ -39,12 +39,12 @@ module.exports = function (config) {
           })
         }
 
-        // Check if we're fetching a school sub-page
-        if (/Schulportrait|SchulListe/.test(url)) {
-          // No, it's probably just a normal page
-          if (debug) console.log(school.id, 'Session not necessary')
-          fetchPageFromWeb()
-        } else {
+        // // Check if we're fetching a school sub-page
+        // if (/Schulportrait|SchulListe/.test(url)) {
+        //   // No, it's probably just a normal page
+        //   if (debug) console.log(school.id, 'Session not necessary')
+        //   fetchPageFromWeb()
+        // } else {
           // Yes, it's a school-subpage
           // This means that we need to have established a session already
           if (debug) console.log(school.id, 'Session necessary')
@@ -80,7 +80,7 @@ module.exports = function (config) {
               }
             })
           }
-        }
+        // }
       })
     })
   }
