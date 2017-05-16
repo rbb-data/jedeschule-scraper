@@ -28,7 +28,6 @@ function scrape (url, method = 'GET', formdata) {
       form: formdata,
       jar: true
     }, function (err, $) {
-      console.log('hay')
       if (err) {
         reject(err)
       } else {
@@ -39,31 +38,27 @@ function scrape (url, method = 'GET', formdata) {
 }
 
 function parseSchoollist ($) {
-    // let $ = cheerio.load(body)
   console.log('parseSchoolList')
   let url = 'http://www.berlin.de/sen/bildung/schulverzeichnis_und_portraets/anwendung/SchulListe.aspx'
   let $rows = $('#DataListSchulen tr')
   let schools = $rows.map((i, tr) => ({
-    id: $(tr).find('a').attr('href').split('?IDSchulzweig=')[1],
-    code: $(tr).find('a').text(),
-    entryURL: URL.resolve(url, $(tr).find('a').attr('href')),
-    name: $(tr).find('td:nth-child(2)').text(),
-    type: $(tr).find('td:nth-child(3)').text(),
-    bezirk: $(tr).find('td:nth-child(4)').text(),
-    ortsteil: $(tr).find('td:nth-child(5)').text()
+    id: $(tr).find('[id^=DataListSchulen_HLinkSchulNr_]').attr('href').split('?IDSchulzweig=')[1].trim(),
+    code: $(tr).find('[id^=DataListSchulen_HLinkSchulNr_]').text().trim(),
+    entryURL: URL.resolve(url, $(tr).find('[id^=DataListSchulen_HLinkSchulNr_]').attr('href')),
+    name: $(tr).find('[id^=DataListSchulen_lblSchulName_]').text().trim(),
+    type: $(tr).find('[id^=DataListSchulen_lblSchulart_]').text().trim(),
+    bezirk: $(tr).find('[id^=DataListSchulen_lblBezirk_]').text().trim(),
+    ortsteil: $(tr).find('[id^=DataListSchulen_lblOrtsteil_]').text().trim()
   })).get()
-  console.log('got schools:', $rows.length)
+  console.log('got %d schools', $rows.length)
   return schools
 }
 
 function getSchoolList (schools, postdata, index) {
-  console.log('getSchoolList')
   return new Promise(function (resolve, reject) {
     scrape('https://www.berlin.de/sen/bildung/schule/berliner-schulen/schulverzeichnis/SchulListe.aspx', 'POST', postdata)
       .then(($) => {
-        console.log('inside promise here')
         var newSchools = parseSchoollist($)
-          // var $ = cheerio.load(data)
         var postdata = {
           '__EVENTTARGET': 'GridViewSchulen',
           '__EVENTARGUMENT': 'Page$' + (index + 1),
