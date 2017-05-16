@@ -18,9 +18,8 @@ module.exports = function (config) {
     return new Promise((resolve, reject) => {
       let cachePath = pr(cacheDir, school.id || '', url.replace(/^.*\/anwendung\//, ''))
       fs.readFile(cachePath, (err, data) => {
-        if (err) {
-          console.error(err)
-          return
+        if (err && err.code !== 'ENOENT') {
+          return reject(err)
         }
 
         if (data) {

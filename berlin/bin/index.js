@@ -3,7 +3,7 @@
 const ProgressBar = require('progress')
 const async = require('async')
 const URL = require('url')
-const { resolve } = require('path')
+const pr = require('path').resolve
 const fs = require('fs-extra')
 const Scrapyard = require('scrapyard')
 
@@ -17,7 +17,7 @@ var scraper = new Scrapyard({
 
 const fetchSchool = require('./lib/fetch-school')
 
-const OUTPUT_DIR = resolve(__dirname, '../output')
+const OUTPUT_DIR = pr(__dirname, '../output')
 
 function scrape (url, method = 'GET', formdata) {
   return new Promise(function (resolve, reject) {
@@ -38,7 +38,6 @@ function scrape (url, method = 'GET', formdata) {
 }
 
 function parseSchoollist ($) {
-  console.log('parseSchoolList')
   let url = 'http://www.berlin.de/sen/bildung/schulverzeichnis_und_portraets/anwendung/SchulListe.aspx'
   let $rows = $('#DataListSchulen tr')
   let schools = $rows.map((i, tr) => ({
@@ -50,12 +49,12 @@ function parseSchoollist ($) {
     bezirk: $(tr).find('[id^=DataListSchulen_lblBezirk_]').text().trim(),
     ortsteil: $(tr).find('[id^=DataListSchulen_lblOrtsteil_]').text().trim()
   })).get()
-  console.log('got %d schools', $rows.length)
   return schools
 }
 
 function getSchoolList (schools, postdata, index) {
   return new Promise(function (resolve, reject) {
+    console.log('Fetching overview of all schools...')
     scrape('https://www.berlin.de/sen/bildung/schule/berliner-schulen/schulverzeichnis/SchulListe.aspx', 'POST', postdata)
       .then(($) => {
         var newSchools = parseSchoollist($)
@@ -84,12 +83,12 @@ function getSchoolList (schools, postdata, index) {
 }
 
 getSchoolList([], {}, 1)
-  .then(schools => schools.filter(school => school.name === 'Albert-Einstein-Gymnasium'))
+  // .then(schools => schools.filter(school => school.name === 'Albert-Einstein-Gymnasium'))
   .then(schools => {
-    let bar = new ProgressBar(':bar :percent (:token1)', { total: schools.length })
+    let bar = new ProgressBar('Fetching details, current id: :token [:bar] (:current/:total, :eta seconds remaining)', { total: schools.length })
 
     async.eachSeries(schools, (school, schoolDone) => {
-      let outputPath = resolve(OUTPUT_DIR, school.id + '.json')
+      let outputPath = pr(OUTPUT_DIR, school.id + '.json')
       try {
         JSON.parse(fs.readFileSync(outputPath))
         bar.tick({ token: school.code })
@@ -99,7 +98,7 @@ getSchoolList([], {}, 1)
       }
       fetchSchool(school)
         .then(school => {
-          bar.tick({ token: school.code })
+          bar.tick({ token: school.id })
           fs.outputFile(
             outputPath,
             JSON.stringify(school),
@@ -110,8 +109,9 @@ getSchoolList([], {}, 1)
       if (err) console.error(err.stack)
       let data = fs.readdirSync(OUTPUT_DIR)
         .filter(file => /\.json$/.test(file))
-        .map(file => JSON.parse(fs.readFileSync(resolve(OUTPUT_DIR, file))))
+        .map(file => JSON.parse(fs.readFileSync(pr(OUTPUT_DIR, file))))
       fs.outputFileSync('schools.json', JSON.stringify(data))
+      console.log(`Done, wrote results to ${pr(__dirname, 'schools.json')}`)
     })
   })
   .catch(e => console.error(e.stack))

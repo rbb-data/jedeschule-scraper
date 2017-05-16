@@ -55,21 +55,27 @@ module.exports = school => new Promise((resolve, reject) => {
         school.address.postcode = plzOrt[1]
         school.address.city = plzOrt[2]
       }
-      school.legal_status = $('#ContentPlaceHolderMenuListe_lblSchulart').text().match(/\((.*?)\)/)[1].trim()
-      school.phone = $('#ContentPlaceHolderMenuListe_lblTelefon').text()
-      school.fax = $('#ContentPlaceHolderMenuListe_lblFax').text()
-      school.email = $('#ContentPlaceHolderMenuListe_HLinkEMail').text()
-      school.website = $('#ContentPlaceHolderMenuListe_HLinkWeb').attr('href')
-      school.headmaster = $('#ContentPlaceHolderMenuListe_lblLeitung').text()
-      school.languages = $('#ContentPlaceHolderMenuListe_lblSprachen').text()
-      school.offers = $('#ContentPlaceHolderMenuListe_lblAngebote').text()
-      school.facilities = $('#ContentPlaceHolderMenuListe_lblAusstattung').text()
-      school.clubs = $('#ContentPlaceHolderMenuListe_lblAGs').text()
-      school.furtherOffer = $('#ContentPlaceHolderMenuListe_lblZusatzText').text()
-      school.cooperations = $('#ContentPlaceHolderMenuListe_lblKoop').text()
-      school.partner = $('#ContentPlaceHolderMenuListe_lblPartner').text()
-      school.lunch = $('#ContentPlaceHolderMenuListe_lblMittag').text()
-      school.majorFields = $('#ContentPlaceHolderMenuListe_lblLeistungskurse').text()
+
+      try {
+        school.legal_status = $('#ContentPlaceHolderMenuListe_lblSchulart').text().match(/\((.*?)\)/)[1].trim()
+        school.phone = $('#ContentPlaceHolderMenuListe_lblTelefon').text()
+        school.fax = $('#ContentPlaceHolderMenuListe_lblFax').text()
+        school.email = $('#ContentPlaceHolderMenuListe_HLinkEMail').text()
+        school.website = $('#ContentPlaceHolderMenuListe_HLinkWeb').attr('href')
+        school.headmaster = $('#ContentPlaceHolderMenuListe_lblLeitung').text()
+        school.languages = $('#ContentPlaceHolderMenuListe_lblSprachen').text()
+        school.offers = $('#ContentPlaceHolderMenuListe_lblAngebote').text()
+        school.facilities = $('#ContentPlaceHolderMenuListe_lblAusstattung').text()
+        school.clubs = $('#ContentPlaceHolderMenuListe_lblAGs').text()
+        school.furtherOffer = $('#ContentPlaceHolderMenuListe_lblZusatzText').text()
+        school.cooperations = $('#ContentPlaceHolderMenuListe_lblKoop').text()
+        school.partner = $('#ContentPlaceHolderMenuListe_lblPartner').text()
+        school.lunch = $('#ContentPlaceHolderMenuListe_lblMittag').text()
+        school.majorFields = $('#ContentPlaceHolderMenuListe_lblLeistungskurse').text()
+      } catch (e) {
+        if ($('h1').text() === 'Bad Gateway!') console.log('Bad gateway for %s', school.id)
+        else throw e
+      }
 
       school._visitedURLs = {}
       school._visitedURLs[task.url] = true
@@ -97,7 +103,6 @@ module.exports = school => new Promise((resolve, reject) => {
   let url = school.entryURL
 
   let queue = async.queue(function worker (task, callback) {
-    console.log('fetching', task)
     fetch(task.url, task.school)
       .then(body => {
         task.complete(body, task)
