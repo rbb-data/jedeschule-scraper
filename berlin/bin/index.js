@@ -85,12 +85,9 @@ getSchoolList()
           fs.outputFile(
             outputPath,
             JSON.stringify(school),
-            _ => setTimeout(schoolDone, Math.random() * 3) // be nice to the server
+            _ => setTimeout(schoolDone, Math.random() * 1.5) // be nice to the server
           )
         })
-        .catch(_ =>
-          setTimeout(schoolDone, Math.random() * 10) // be even nicer to the server
-        )
     }, function allDone (err) {
       if (err) console.error(err.stack)
 
